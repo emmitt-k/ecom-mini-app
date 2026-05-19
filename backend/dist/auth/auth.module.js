@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const jwt_1 = require("@nestjs/jwt");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const refresh_token_entity_1 = require("./entities/refresh-token.entity");
@@ -19,11 +18,7 @@ let AuthModule = class AuthModule {
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            typeorm_1.TypeOrmModule.forFeature([refresh_token_entity_1.RefreshToken]),
-            users_module_1.UsersModule,
-            jwt_1.JwtModule.register({}),
-        ],
+        imports: [typeorm_1.TypeOrmModule.forFeature([refresh_token_entity_1.RefreshToken]), users_module_1.UsersModule],
         controllers: [auth_controller_1.AuthController],
         providers: [auth_service_1.AuthService],
         exports: [auth_service_1.AuthService],

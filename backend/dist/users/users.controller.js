@@ -16,6 +16,9 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
 const create_user_dto_1 = require("./dto/create-user.dto");
+const update_user_dto_1 = require("./dto/update-user.dto");
+const jwt_auth_guard_1 = require("../shared/guards/jwt-auth.guard");
+const current_user_decorator_1 = require("../shared/decorators/current-user.decorator");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -23,6 +26,22 @@ let UsersController = class UsersController {
     }
     async register(createUserDto) {
         const user = await this.usersService.create(createUserDto);
+        return {
+            id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
+        };
+    }
+    async getMe(userId) {
+        const user = await this.usersService.findById(userId);
+        return {
+            id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
+        };
+    }
+    async updateMe(userId, updateUserDto) {
+        const user = await this.usersService.update(userId, updateUserDto);
         return {
             id: user.id,
             email: user.email,
@@ -38,6 +57,23 @@ __decorate([
     __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "register", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('me'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('sub')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getMe", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)('me'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('sub')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_user_dto_1.UpdateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateMe", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [users_service_1.UsersService])

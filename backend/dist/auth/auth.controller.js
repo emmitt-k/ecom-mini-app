@@ -17,8 +17,8 @@ const common_1 = require("@nestjs/common");
 const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
-const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
-const current_user_decorator_1 = require("./decorators/current-user.decorator");
+const jwt_auth_guard_1 = require("../shared/guards/jwt-auth.guard");
+const current_user_decorator_1 = require("../shared/decorators/current-user.decorator");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {

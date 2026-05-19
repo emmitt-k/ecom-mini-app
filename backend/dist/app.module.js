@@ -13,6 +13,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const throttler_1 = require("@nestjs/throttler");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const shared_module_1 = require("./shared/shared.module");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 let AppModule = class AppModule {
@@ -53,6 +54,7 @@ exports.AppModule = AppModule = __decorate([
                     synchronize: false,
                 }),
             }),
+            shared_module_1.SharedModule,
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
         ],

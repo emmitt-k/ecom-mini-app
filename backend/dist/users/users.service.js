@@ -81,6 +81,20 @@ let UsersService = class UsersService {
     async validatePassword(user, password) {
         return bcrypt.compare(password, user.password);
     }
+    async update(id, updateUserDto) {
+        const user = await this.findById(id);
+        if (updateUserDto.email && updateUserDto.email !== user.email) {
+            const existingUser = await this.findByEmail(updateUserDto.email);
+            if (existingUser) {
+                throw new common_1.ConflictException('Email already in use');
+            }
+            user.email = updateUserDto.email;
+        }
+        if (updateUserDto.password) {
+            user.password = await bcrypt.hash(updateUserDto.password, 10);
+        }
+        return this.userRepository.save(user);
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

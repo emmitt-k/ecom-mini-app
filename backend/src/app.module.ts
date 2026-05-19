@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SharedModule } from './shared/shared.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 
@@ -41,6 +42,7 @@ import { AuthModule } from './auth/auth.module';
         synchronize: false,
       }),
     }),
+    SharedModule,
     UsersModule,
     AuthModule,
   ],

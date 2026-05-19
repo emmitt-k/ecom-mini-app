@@ -1,13 +1,3 @@
-/**
- * UsersService handles user-related business logic.
- *
- * Repository Pattern in NestJS + TypeORM:
- * - Unlike Laravel where you manually create repository classes,
- *   TypeORM auto-generates repositories for each entity.
- * - Registration happens in users.module.ts: TypeOrmModule.forFeature([User])
- * - This creates Repository<User> with built-in CRUD methods (find, findOne, save, etc.)
- * - @InjectRepository(User) injects the auto-generated repository into this service.
- */
 import {
   Injectable,
   ConflictException,
@@ -18,6 +8,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -55,5 +46,23 @@ export class UsersService {
 
   async validatePassword(user: User, password: string): Promise<boolean> {
     return bcrypt.compare(password, user.password);
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findById(id);
+
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+      const existingUser = await this.findByEmail(updateUserDto.email);
+      if (existingUser) {
+        throw new ConflictException('Email already in use');
+      }
+      user.email = updateUserDto.email;
+    }
+
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    return this.userRepository.save(user);
   }
 }

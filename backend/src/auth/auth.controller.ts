@@ -14,8 +14,8 @@ import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
+import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../shared/decorators/current-user.decorator';
 
 interface RequestWithCookies extends Request {
   cookies: {

@@ -4,4 +4,5 @@ export declare class User {
     password: string;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
 }

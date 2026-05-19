@@ -1,13 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-
-export interface JwtPayload {
-  sub: string;
-  email: string;
-}
-
-interface RequestWithUser {
-  user?: JwtPayload;
-}
+import type { JwtPayload, RequestWithUser } from '../types/auth.types';
 
 export const CurrentUser = createParamDecorator(
   (

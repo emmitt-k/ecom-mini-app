@@ -1,7 +1,4 @@
 import { DataSource } from 'typeorm';
-import * as dotenv from 'dotenv';
-
-dotenv.config({ path: '../backend/.env' });
 
 export default new DataSource({
   type: 'postgres',
@@ -10,7 +7,7 @@ export default new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'ecommerce',
-  entities: ['../backend/src/**/*.entity{.ts,.js}'],
-  migrations: ['migrations/*{.ts,.js}'],
+  entities: ['src/**/*.entity{.ts,.js}'],
+  migrations: ['database/migrations/*{.ts,.js}'],
   synchronize: false,
 });

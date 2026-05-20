@@ -7,7 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { apiClient, setAccessToken, getAccessToken } from "@/lib/api";
+import { httpClient, setAccessToken } from "@/api/http-client";
 
 interface User {
   id: string;
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initAuth = async () => {
       try {
         // Try to get current user (will trigger token refresh if needed)
-        const response = await apiClient.get("/users/me");
+        const response = await httpClient.get("/users/me");
         setUser(response.data);
       } catch {
         // Not logged in or token invalid
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await apiClient.post("/auth/login", {
+    const response = await httpClient.post("/auth/login", {
       email,
       password,
     });
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (email: string, password: string) => {
-    const response = await apiClient.post("/users", {
+    const response = await httpClient.post("/users", {
       email,
       password,
     });
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await apiClient.post("/auth/logout");
+      await httpClient.post("/auth/logout");
     } finally {
       setAccessToken(null);
       setUser(null);

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 const loginSchema = z.object({
   email: z.string().min(1, "Please enter your email").email("Please enter a valid email address"),
   password: z.string().min(1, "Please enter your password"),
+  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -34,6 +35,9 @@ export function LoginForm() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onChange",
+    defaultValues: {
+      rememberMe: false,
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -42,6 +46,7 @@ export function LoginForm() {
 
     try {
       await login(data.email, data.password);
+      // TODO: Implement remember me functionality
       router.push("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
@@ -57,7 +62,7 @@ export function LoginForm() {
           Welcome back
         </h1>
         <p className="text-[0.95rem] text-text-secondary leading-relaxed">
-          Sign in to continue shopping and track your orders
+          Sign in to your account to continue shopping
         </p>
       </div>
 
@@ -73,11 +78,11 @@ export function LoginForm() {
       )}
 
       <div className="flex gap-3 mb-7">
-        <SocialButton provider="google">Sign in with Google</SocialButton>
-        <SocialButton provider="apple">Sign in with Apple</SocialButton>
+        <SocialButton provider="google">Google</SocialButton>
+        <SocialButton provider="apple">Apple</SocialButton>
       </div>
 
-      <Divider className="mb-7">or sign in with email</Divider>
+      <Divider className="mb-7">or continue with email</Divider>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
@@ -98,17 +103,9 @@ export function LoginForm() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm font-semibold text-text-primary">
-              Password
-            </label>
-            <Link
-              href="#"
-              className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label className="block text-sm font-semibold text-text-primary mb-1.5">
+            Password
+          </label>
           <PasswordInput
             placeholder="Enter your password"
             autoComplete="current-password"
@@ -121,11 +118,28 @@ export function LoginForm() {
           )}
         </div>
 
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-[18px] h-[18px] rounded border-border text-primary focus:ring-primary"
+              {...register("rememberMe")}
+            />
+            <span className="text-sm text-text-secondary">Remember me</span>
+          </label>
+          <Link
+            href="#"
+            className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading}
           className={cn(
-            "w-full py-3.5 px-4 mt-2",
+            "w-full py-3.5 px-4",
             "flex items-center justify-center gap-2",
             "text-sm font-semibold text-white",
             "bg-primary rounded-md",

@@ -8,7 +8,6 @@ export interface PasswordInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
   error?: boolean;
   showStrength?: boolean;
-  value?: string;
 }
 
 function getPasswordStrength(password: string): number {
@@ -22,9 +21,17 @@ function getPasswordStrength(password: string): number {
 }
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, error, showStrength = true, value = "", ...props }, ref) => {
+  ({ className, error, showStrength = true, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
-    const strength = getPasswordStrength(value as string);
+    const [inputValue, setInputValue] = useState("");
+    
+    // Get value from input ref for strength meter
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputValue(e.target.value);
+      props.onChange?.(e);
+    };
+    
+    const strength = getPasswordStrength(inputValue);
     const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
     const strengthColors = [
       "",
@@ -48,7 +55,6 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <input
             ref={ref}
             type={showPassword ? "text" : "password"}
-            value={value}
             className={cn(
               "w-full h-10 pl-11 pr-10 py-2",
               "text-sm text-text-primary placeholder:text-text-tertiary",
@@ -61,6 +67,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
               className
             )}
             {...props}
+            onChange={handleChange}
           />
           <button
             type="button"
@@ -76,7 +83,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
 
-        {showStrength && value && (
+        {showStrength && inputValue && (
           <div className="space-y-1">
             <div className="flex gap-1">
               {[1, 2, 3, 4].map((level) => (

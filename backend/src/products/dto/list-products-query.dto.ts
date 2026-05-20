@@ -21,7 +21,7 @@ export class ListProductsQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
+  @Min(5)
   @Max(50)
   limit?: number = 20;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useProducts, Product } from "@/api/products";
 import { ShopNavbar } from "@/components/products/shop-navbar";
 import { FiltersSidebar } from "@/components/products/filters-sidebar";
@@ -9,6 +9,7 @@ import { ProductGrid } from "@/components/products/product-grid";
 import { SortSelect } from "@/components/products/sort-select";
 
 type SortOption = "featured" | "newest" | "price-low" | "price-high" | "rating";
+type ItemsPerPageOption = 5 | 10 | 20 | 30 | 50;
 
 function sortProducts(products: Product[], sort: SortOption): Product[] {
   const sorted = [...products];
@@ -59,6 +60,33 @@ export default function ProductsPage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Items per page state with localStorage persistence
+  const [itemsPerPage, setItemsPerPage] = useState<ItemsPerPageOption>(20);
+  const [isItemsPerPageOpen, setIsItemsPerPageOpen] = useState(false);
+  const itemsPerPageRef = useRef<HTMLDivElement>(null);
+
+  // Load saved preference on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("productBatchSize");
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if ([5, 10, 20, 30, 50].includes(parsed)) {
+        setItemsPerPage(parsed as ItemsPerPageOption);
+      }
+    }
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (itemsPerPageRef.current && !itemsPerPageRef.current.contains(event.target as Node)) {
+        setIsItemsPerPageOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Fetch products with infinite scroll
   const {
     data,
@@ -71,7 +99,7 @@ export default function ProductsPage() {
     search: searchQuery || undefined,
     minPrice: appliedMinPrice > 0 ? appliedMinPrice : undefined,
     maxPrice: appliedMaxPrice < 1000 ? appliedMaxPrice : undefined,
-    limit: 20,
+    limit: itemsPerPage,
   });
 
   // Flatten all pages
@@ -229,6 +257,41 @@ export default function ProductsPage() {
 
               {/* Sort */}
               <SortSelect value={sortBy} onChange={setSortBy} />
+
+              {/* Items Per Page */}
+              <div ref={itemsPerPageRef} className="relative">
+                <button
+                  onClick={() => setIsItemsPerPageOpen(!isItemsPerPageOpen)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-lg text-sm font-medium text-text-secondary hover:border-primary-light hover:text-primary transition-all"
+                >
+                  <span>{itemsPerPage} / page</span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${isItemsPerPageOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {isItemsPerPageOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-border rounded-lg shadow-lg z-50 py-1">
+                    {[5, 10, 20, 30, 50].map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          setItemsPerPage(option as ItemsPerPageOption);
+                          localStorage.setItem("productBatchSize", option.toString());
+                          setIsItemsPerPageOpen(false);
+                        }}
+                        className={`w-full px-4 py-2 text-sm text-left transition-colors ${
+                          itemsPerPage === option
+                            ? "bg-primary-50 text-primary font-medium"
+                            : "text-text-secondary hover:bg-surface-alt"
+                        }`}
+                      >
+                        {option} items
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Mobile Filter Button */}
               <button

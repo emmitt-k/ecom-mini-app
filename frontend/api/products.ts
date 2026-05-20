@@ -46,7 +46,7 @@ export async function getProduct(id: string): Promise<Product> {
 // React Query Hooks
 export function useProducts(filter: Omit<ProductsFilter, "cursor">) {
   return useInfiniteQuery({
-    queryKey: ["products", filter],
+    queryKey: ["products", filter.search, filter.minPrice, filter.maxPrice, filter.limit],
     queryFn: ({ pageParam }) =>
       getProducts({ ...filter, cursor: pageParam }),
     getNextPageParam: (lastPage) =>

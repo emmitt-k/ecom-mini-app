@@ -24,7 +24,7 @@ export function setAccessToken(token: string | null): void {
 // Check if URL is an auth-related endpoint
 function isAuthEndpoint(url: string | undefined): boolean {
   if (!url) return false;
-  const authEndpoints = ["/users/me", "/auth/refresh"];
+  const authEndpoints = ["/auth/refresh"];
   return authEndpoints.some((endpoint) => url.includes(endpoint));
 }
 

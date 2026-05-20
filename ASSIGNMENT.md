@@ -30,7 +30,6 @@ ensure a smooth browsing experience.
 
 ● Configurable Scaling: The page size must be user-configurable, supporting a minimum of
 5 and a maximum of 50 items per request.
-- typical widget for pagination
 
 ● Performance: Ensure the frontend handles large lists efficiently without UI lag.
 - virtualization

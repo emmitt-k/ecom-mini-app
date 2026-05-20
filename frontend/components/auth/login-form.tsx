@@ -47,7 +47,7 @@ export function LoginForm() {
     try {
       await login(data.email, data.password);
       // TODO: Implement remember me functionality
-      router.push("/");
+      router.push("/products");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {

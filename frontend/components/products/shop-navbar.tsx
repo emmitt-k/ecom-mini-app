@@ -1,15 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, ShoppingBag, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ShopNavbarProps {
   onSearchClick?: () => void;
 }
 
 export function ShopNavbar({ onSearchClick }: ShopNavbarProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-[16px] border-b border-border-light">
@@ -52,9 +66,24 @@ export function ShopNavbar({ onSearchClick }: ShopNavbarProps) {
           </button>
 
           {isAuthenticated ? (
-            <div className="w-9 h-9 rounded-full bg-primary-light flex items-center justify-center text-sm font-bold text-primary border-2 border-white cursor-pointer">
-              {user?.email?.charAt(0).toUpperCase() || "U"}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-primary-light flex items-center justify-center text-sm font-bold text-primary border-2 border-white hover:bg-primary hover:text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                {user?.email?.charAt(0).toUpperCase() || "U"}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 mt-1">
+                <div className="px-3 py-2 text-sm font-medium text-text-primary">
+                  {user?.email}
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive cursor-pointer focus:text-destructive focus:bg-destructive-light"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link
               href="/login"

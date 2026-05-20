@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { config } from "@/lib/config";
 
 // Create axios instance
@@ -21,9 +21,16 @@ export function setAccessToken(token: string | null): void {
   accessToken = token;
 }
 
+// Check if URL is an auth-related endpoint
+function isAuthEndpoint(url: string | undefined): boolean {
+  if (!url) return false;
+  const authEndpoints = ["/users/me", "/auth/refresh"];
+  return authEndpoints.some((endpoint) => url.includes(endpoint));
+}
+
 // Request interceptor
 httpClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -37,14 +44,26 @@ httpClient.interceptors.request.use(
 httpClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
+    // Silently handle expected 401s from auth check endpoints
+    if (error.response?.status === 401 && isAuthEndpoint(originalRequest?.url)) {
+      // Don't clear token for /users/me - it's just checking auth status
+      // But do clear for /auth/refresh failure
+      if (originalRequest?.url?.includes("/auth/refresh")) {
+        setAccessToken(null);
+      }
+      return Promise.reject(error);
+    }
 
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !(originalRequest as any)._retry
+      !originalRequest._retry
     ) {
-      (originalRequest as any)._retry = true;
+      originalRequest._retry = true;
 
       try {
         const response = await axios.post(

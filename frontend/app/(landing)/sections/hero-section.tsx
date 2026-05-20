@@ -1,15 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Star, Zap } from "lucide-react";
 
 export function HeroSection() {
-  const scrollToBenefits = () => {
-    const element = document.querySelector("#benefits");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   return (
     <section className="min-h-screen flex items-center bg-gradient-to-br from-[#eff6ff] via-white via-40% via-white via-60% to-[#faf5ff] relative overflow-hidden pt-[72px]">
@@ -43,13 +38,13 @@ export function HeroSection() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 items-center mb-6">
-            <button
-              onClick={scrollToBenefits}
+            <Link
+              href="/products"
               className="inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary-dark transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)]"
             >
               Start Shopping
               <ArrowRight className="w-[18px] h-[18px]" />
-            </button>
+            </Link>
             <button
               onClick={() => {
                 const element = document.querySelector("#cta");

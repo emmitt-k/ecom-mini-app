@@ -47,7 +47,7 @@ export function RegisterForm() {
     try {
       // Note: Backend only accepts email and password, name is for UX only
       await registerUser(data.email, data.password);
-      router.push("/");
+      router.push("/products");
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {

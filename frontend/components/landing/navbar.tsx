@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, X, ShoppingBag, LogOut, User } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +29,11 @@ export function LandingNavbar() {
         element.scrollIntoView({ behavior: "smooth" });
       }
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
   };
 
   return (
@@ -57,12 +66,32 @@ export function LandingNavbar() {
           >
             Get Started
           </button>
-          <Link
-            href="/login"
-            className="inline-flex items-center text-sm font-semibold text-white bg-primary px-5 py-2 rounded-md hover:bg-primary-dark transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)]"
-          >
-            Sign In
-          </Link>
+          
+          {isAuthenticated ? (
+            <>
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Browse
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-primary px-5 py-2 rounded-md hover:bg-primary-dark transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)]"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center text-sm font-semibold text-white bg-primary px-5 py-2 rounded-md hover:bg-primary-dark transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)]"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -100,13 +129,37 @@ export function LandingNavbar() {
           >
             Get Started
           </button>
-          <Link
-            href="/login"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="inline-flex items-center text-base font-semibold text-white bg-primary px-6 py-3 rounded-md hover:bg-primary-dark transition-all"
-          >
-            Sign In
-          </Link>
+          
+          {isAuthenticated ? (
+            <>
+              <Link
+                href="/products"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="inline-flex items-center gap-2 text-lg font-medium text-primary hover:text-primary-dark transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                Browse Products
+              </Link>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="inline-flex items-center gap-2 text-base font-semibold text-white bg-primary px-6 py-3 rounded-md hover:bg-primary-dark transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="inline-flex items-center text-base font-semibold text-white bg-primary px-6 py-3 rounded-md hover:bg-primary-dark transition-all"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
     </nav>

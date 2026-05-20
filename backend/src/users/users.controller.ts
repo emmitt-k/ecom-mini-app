@@ -10,7 +10,7 @@ import { CurrentUser } from '../shared/decorators/current-user.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
+  @Post()
   async register(
     @Body() createUserDto: CreateUserDto,
   ): Promise<UserResponseDto> {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/providers/providers";
 
 const inter = Inter({
@@ -8,9 +8,15 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
-  title: "E-Commerce Mini App",
-  description: "A simple e-commerce application",
+  title: "Shopica — E-Commerce",
+  description: "Discover curated products you'll love",
 };
 
 export default function RootLayout({
@@ -20,7 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${inter.variable} ${plusJakartaSans.variable} font-sans antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

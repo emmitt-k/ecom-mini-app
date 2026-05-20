@@ -1,9 +1,10 @@
 import { RegisterForm } from "@/components/auth/register-form";
 
+export const metadata = {
+  title: "Create Account — Shopica",
+  description: "Join Shopica and start discovering curated products you'll love",
+};
+
 export default function RegisterPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <RegisterForm />
-    </div>
-  );
+  return <RegisterForm />;
 }

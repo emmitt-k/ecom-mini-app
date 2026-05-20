@@ -47,7 +47,6 @@ workflows.
 ● Provide a simple deployment strategy or instructions for running the application in a production-like environment.
 - docker
 - docker-compose
-- aws cdk
 
 Submission Instructions: Please provide a link to a GitHub repository including a README that
 briefly explains your architectural choices and instructions on how to run the project locally

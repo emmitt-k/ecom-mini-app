@@ -192,49 +192,6 @@ make build
 ```
 
 ---
-
-## CI/CD Pipeline
-
-This project uses **GitHub Actions** for continuous integration and deployment.
-
-### Pipeline Overview
-
-```
-PR to main ────► CI (lint, test, build) ────► Merge ────► Deploy to Staging ────► Manual ────► Deploy to Production
-```
-
-### Workflows
-
-| Workflow | Trigger | Description |
-|----------|---------|-------------|
-| **CI** | PR to `main`, push to `main` | Lint, unit tests, integration tests, build validation |
-| **Deploy Staging** | Push to `main` | Build & push Docker images to ECR, deploy to ECS staging |
-| **Deploy Production** | Manual trigger | Promote staging images to production, deploy to ECS |
-| **Database Migration** | Manual trigger | Run TypeORM migrations on selected environment |
-
-### Key Features
-
-- **OIDC Authentication**: Secure AWS access without long-lived credentials
-- **Separate Environments**: Staging (auto-deploy) and Production (manual)
-- **Image Promotion**: Production uses the same images tested in staging
-- **Rolling Deployments**: Zero-downtime updates with ECS
-- **Manual Migrations**: Database changes run manually for safety
-
-### Setup
-
-See [docs/CICD_SETUP.md](docs/CICD_SETUP.md) for detailed setup instructions including:
-- AWS resources (ECR, ECS, IAM)
-- GitHub Secrets configuration
-- OIDC provider setup
-- Secrets Manager configuration
-
-### Required GitHub Secrets
-
-```
-AWS_ACCOUNT_ID    # Your AWS account ID
-AWS_ROLE_ARN      # ARN of the IAM role for GitHub Actions
-```
-
 ## Makefile Commands
 
 ```bash
@@ -294,6 +251,59 @@ make clean      # Stop services and remove volumes (wipes database)
 ### Products
 - `GET /products?limit=&cursor=&search=&minPrice=&maxPrice` - List with cursor pagination
 - `GET /products/:id` - Product detail
+
+## Testing
+
+The project includes comprehensive test suites using Jest:
+
+### Test Types
+
+| Test Type | Location | Description |
+|-----------|----------|-------------|
+| **Unit Tests** | `backend/src/**/__tests__/*.spec.ts` | Isolated tests with mocked dependencies (131 tests) |
+| **Integration Tests** | `backend/test/integration/*.integration-spec.ts` | API endpoint tests with SQLite in-memory DB (43 tests) |
+| **E2E Tests** | `backend/test/e2e/*.e2e-spec.ts` | Full application tests |
+
+### Running Tests
+
+#### Backend Tests
+
+```bash
+cd backend
+
+# Run all unit tests
+npm test
+
+# Run integration tests (requires JWT secrets)
+export JWT_SECRET=test-secret
+export JWT_REFRESH_SECRET=test-refresh-secret
+npm run test:integration
+
+# Run E2E tests
+npm run test:e2e
+
+# Run all tests
+npm test && npm run test:integration
+
+# Run with coverage
+npm run test:cov
+
+# Run in watch mode
+npm run test:watch
+```
+
+#### Frontend Tests
+
+```bash
+cd frontend
+
+# Run tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+```
+
 ## License
 
 MIT

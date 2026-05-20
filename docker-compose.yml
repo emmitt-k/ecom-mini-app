@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-ecommerce}
-    ports:
-      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +18,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: ecom-backend
     restart: unless-stopped
     environment:
@@ -32,21 +30,26 @@ services:
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-access-token-key-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-token-key-change-in-production}
-      NODE_ENV: development
+      NODE_ENV: production
     ports:
       - "3001:3001"
-    volumes:
-      - ./backend/src:/app/src
-      - ./backend/database:/app/database
-      - ./backend/package.json:/app/package.json
-      - ./backend/package-lock.json:/app/package-lock.json
-      - ./backend/tsconfig.json:/app/tsconfig.json
-      - ./backend/tsconfig.build.json:/app/tsconfig.build.json
-      - ./backend/nest-cli.json:/app/nest-cli.json
-      - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ecom-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:3001}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

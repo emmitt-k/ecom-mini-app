@@ -13,178 +13,34 @@ A production-ready e-commerce product catalog built with Next.js, NestJS, and Po
 ```
 
 ### Technology Stack
-- **Frontend**: Next.js 14+ with App Router, React Query, Tailwind CSS
-- **Backend**: NestJS with TypeORM, JWT authentication
-- **Database**: PostgreSQL
-- **Testing**: Jest (unit & integration tests)
-- **CI/CD**: GitHub Actions
-- **Deployment**: Docker, Docker Compose, AWS CDK
+- **Frontend**: Next.js 16+ with App Router, React Query, Tailwind CSS v4, shadcn/ui
+- **Backend**: NestJS 11+ with TypeORM, JWT authentication
+- **Database**: PostgreSQL 15
+- **Authentication**: JWT (access token: 15min, refresh token: 30min with sliding window)
 
 ## Project Structure
 
 ```
 ecom-mini-app/
 ├── frontend/                 # Next.js application
-│   ├── src/
-│   │   ├── app/             # App router pages
-│   │   ├── components/      # Reusable components
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── lib/             # Utilities and configurations
-│   │   └── types/           # TypeScript types
-│   ├── public/              # Static assets
-│   └── tests/               # Frontend tests
+│   ├── app/                 # App router pages
+│   ├── components/          # Reusable components
+│   ├── hooks/               # Custom hooks
+│   └── lib/                 # Utilities and configurations
 │
 ├── backend/                  # NestJS application
 │   ├── src/
 │   │   ├── auth/            # Authentication module
 │   │   ├── products/        # Products module
 │   │   ├── users/           # Users module
-│   │   ├── common/          # Shared utilities
-│   │   └── config/          # Configuration
-│   └── test/                # Backend tests
+│   │   └── shared/          # Shared utilities (guards, decorators)
+│   └── database/            # Migrations and seeds
 │
-├── database/                 # Database scripts and migrations
-├── .github/                  # GitHub Actions workflows
-├── docker/                   # Docker configurations
-└── docs/                     # Additional documentation
-```
-
-## Key Features & Implementation
-
-### 1. Authentication & Session Management
-
-#### Secure Login
-- **Throttling**: Rate limiting using `@nestjs/throttler` to prevent brute-force attacks
-- **Implementation**: 
-  - Global throttle guard (5 attempts per minute)
-  - Redis-backed throttling for distributed systems
-  - Account lockout after repeated failures
-
-#### Persistent Sessions
-- **JWT Strategy**: Access token (15min) + Refresh token (30min inactivity)
-- **Implementation**:
-  - Access tokens stored in memory
-  - Refresh tokens stored in HTTP-only cookies
-  - Automatic token refresh via interceptors
-  - Session persistence across browser restarts
-
-#### Inactivity Timeout
-- **Mechanism**: Refresh token invalidation after 30 minutes of inactivity
-- **Implementation**:
-  - Last activity timestamp tracking
-  - Automatic logout on timeout
-  - Client-side activity monitoring
-
-### 2. Product Catalog & Infinite Scroll
-
-#### Virtualization
-- **Library**: `@tanstack/react-virtual` for efficient list rendering
-- **Benefits**: 
-  - Only visible items rendered in DOM
-  - Smooth scrolling with large datasets
-  - Memory efficient
-
-#### Configurable Pagination
-- **Page Size**: User-configurable (5-50 items)
-- **Implementation**:
-  - URL query params for state persistence
-  - Debounced page size changes
-  - Seamless infinite scroll integration
-
-#### Performance Optimizations
-- React Query for caching and background refetching
-- Optimistic updates for better UX
-- Image lazy loading with Next.js Image component
-- Skeleton loaders during data fetching
-
-### 3. CI/CD Pipeline
-
-#### GitHub Actions Workflows
-- **CI Pipeline** (on PR):
-  - Linting & type checking
-  - Unit tests
-  - Integration tests
-  - Build verification
-
-- **CD Pipeline** (on main branch):
-  - Run all tests
-  - Build Docker images
-  - Push to container registry
-  - Deploy to staging/production
-
-### 4. Testing Strategy
-
-#### Unit Tests
-- Frontend: Component tests with React Testing Library
-- Backend: Service and controller tests
-- Coverage target: 80%
-
-#### Integration Tests
-- API endpoint tests with supertest
-- Database integration tests
-- Authentication flow tests
-
-### 5. Deployment
-
-#### Docker Strategy
-- Multi-stage builds for optimized images
-- Docker Compose for local development
-- Production-ready configurations
-
-#### AWS CDK Infrastructure
-- VPC with public/private subnets
-- RDS PostgreSQL instance
-- ECS Fargate for containers
-- Application Load Balancer
-- CloudWatch for logging
-
-## API Endpoints
-
-### Authentication
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout
-- `POST /auth/refresh` - Refresh access token
-
-### Products
-- `GET /products` - List products (paginated)
-- `GET /products/:id` - Get product details
-
-## Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Products Table
-```sql
-CREATE TABLE products (
-  id UUID PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  price DECIMAL(10, 2) NOT NULL,
-  image_url VARCHAR(500),
-  stock_quantity INTEGER DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Refresh Tokens Table
-```sql
-CREATE TABLE refresh_tokens (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  token VARCHAR(500) NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+├── .env                      # Environment variables (gitignored)
+├── .env.example             # Example environment file
+├── docker-compose.yml       # Docker Compose configuration
+├── Makefile                 # Development commands
+└── README.md                # This file
 ```
 
 ## Getting Started
@@ -192,104 +48,210 @@ CREATE TABLE refresh_tokens (
 ### Prerequisites
 - Node.js 20+
 - Docker and Docker Compose
-- PostgreSQL (if running locally)
+- npm or yarn
 
-### Installation
+### Option 1: Local Development (Manual)
 
-1. **Clone the repository**
+Best for **development, debugging, and fast iteration** with hot reload.
+
+#### 1. Setup Environment
+
 ```bash
-git clone <repository-url>
-cd ecom-mini-app
-```
-
-2. **Environment Setup**
-```bash
-# Backend environment
-cp backend/.env.example backend/.env
-
-# Frontend environment
-cp frontend/.env.example frontend/.env
-```
-
-3. **Run with Docker Compose** (Recommended)
-```bash
-docker-compose up -d
-```
-
-4. **Run Locally (Development)**
-```bash
-# Start PostgreSQL
-docker-compose up -d postgres
+# Copy environment file
+cp .env.example .env
 
 # Install dependencies
-npm install
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+#### 2. Start PostgreSQL
+
+```bash
+# From project root
+docker-compose up -d postgres
+
+# Or with Makefile
+make up  # This will fail for backend/frontend but postgres will start
+```
+
+#### 3. Configure Environment Variables
+
+Edit `.env` file for local development:
+
+```bash
+# Change DB_HOST from 'postgres' to 'localhost' for local dev
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=ecommerce
+JWT_SECRET=dev-secret-key
+JWT_REFRESH_SECRET=dev-refresh-secret
+```
+
+#### 4. Run Backend
+
+```bash
+cd backend
 
 # Run migrations
 npm run migration:run
 
-# Start backend
-cd backend && npm run start:dev
+# Seed database (optional)
+npm run seed
 
-# Start frontend (new terminal)
-cd frontend && npm run dev
+# Start development server with hot reload
+npm run start:dev
 ```
 
-### Access the Application
+Backend runs at: http://localhost:3001
+
+#### 5. Run Frontend
+
+```bash
+cd frontend
+
+# Start development server with hot reload
+npm run dev
+```
+
+Frontend runs at: http://localhost:3000
+
+#### 6. Access Application
+
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
-- API Documentation: http://localhost:3001/api
+- Test user: `admin@example.com` / `password123`
 
-## Scripts
+---
 
-### Backend
+### Option 2: Production Simulation (Docker Compose)
+
+Best for **testing production builds, CI/CD validation, and staging**.
+
+This runs everything in Docker containers with production-optimized builds (no hot reload).
+
+#### 1. Setup Environment
+
 ```bash
-npm run start:dev      # Start development server
-npm run build          # Build for production
-npm run test           # Run unit tests
-npm run test:e2e       # Run e2e tests
-npm run lint           # Run linter
+# Copy environment file
+cp .env.example .env
+
+# Edit if needed (defaults work for local Docker)
 ```
 
-### Frontend
+#### 2. Start All Services
+
 ```bash
-npm run dev            # Start development server
-npm run build          # Build for production
-npm run start          # Start production server
-npm run test           # Run tests
-npm run lint           # Run linter
+# Using Make (recommended)
+make up
+
+# Or using Docker Compose directly
+docker-compose up -d
 ```
 
-## Architectural Decisions
+#### 3. Run Migrations and Seed
 
-### Why This Stack?
-1. **Next.js**: App Router provides modern SSR/SSG capabilities, excellent DX
-2. **NestJS**: Structured, scalable architecture with built-in dependency injection
-3. **PostgreSQL**: ACID compliance, excellent for e-commerce data integrity
-4. **JWT + Refresh Tokens**: Industry-standard secure authentication pattern
-5. **Virtualization**: Essential for performance with large product catalogs
+```bash
+# Run database migrations
+make migrate
 
-### Security Considerations
-1. **Rate Limiting**: Prevents brute-force attacks on login
-2. **HTTP-Only Cookies**: Protects refresh tokens from XSS
-3. **CORS Configuration**: Restricts API access to known origins
-4. **Input Validation**: DTOs with class-validator on all endpoints
-5. **Password Hashing**: bcrypt with salt rounds for secure storage
+# Seed with test data
+make seed
+```
 
-### Performance Optimizations
-1. **Database Indexing**: Indexes on frequently queried fields
-2. **Connection Pooling**: Efficient database connections
-3. **Caching**: React Query caching on frontend
-4. **Code Splitting**: Next.js automatic code splitting
-5. **Image Optimization**: Next.js Image component with lazy loading
+#### 4. Access Application
 
-## Future Enhancements
-- Shopping cart functionality
-- Order management
-- Payment integration
-- Product search and filtering
-- Admin dashboard
-- Email notifications
-- Multi-language support
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001
+- PostgreSQL: localhost:5432 (if exposed)
 
+#### 5. Useful Commands
+
+```bash
+# View all logs
+make logs
+
+# View specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f postgres
+
+# Rebuild after code changes (no hot reload in Docker)
+make rebuild
+
+# Stop all services
+make down
+
+# Stop and remove all data (including database)
+make clean
+
+# Build images without starting
+make build
+```
+
+---
+
+## Makefile Commands
+
+```bash
+make up         # Start all Docker services
+make down       # Stop all Docker services
+make build      # Build all Docker images
+make rebuild    # Stop, rebuild, and start all services
+make migrate    # Run database migrations
+make seed       # Seed database with test data
+make logs       # View all service logs
+make clean      # Stop services and remove volumes (wipes database)
+```
+
+---
+
+## Key Features & Implementation
+
+### Authentication & Session Management
+
+#### Secure Login
+- **Throttling**: Rate limiting using `@nestjs/throttler`
+  - 5 login attempts per minute
+  - 30 product requests per minute
+
+#### Persistent Sessions
+- **JWT Strategy**: Access token (15min) + Refresh token (30min)
+- **Implementation**:
+  - Access tokens stored in memory (never localStorage)
+  - Refresh tokens stored in HTTP-only cookies
+  - Automatic token refresh via axios interceptors
+  - All refresh tokens invalidated on logout
+
+### Product Catalog
+
+#### Pagination
+- **Cursor-based pagination** using `createdAt` + `id`
+- Base64url encoded cursor: `{ id, createdAt }`
+- Returns `meta.nextCursor` and `meta.hasMore` for infinite scroll
+
+#### Search & Filters
+- Text search on product name and description
+- Price range filters (minPrice, maxPrice)
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/login` - Login, sets refresh cookie
+- `POST /auth/register` - Register new user
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/logout` - Logout, clears all refresh tokens
+
+### Users
+- `POST /users` - Register new user
+- `GET /users/me` - Get current user profile
+- `PATCH /users/me` - Update profile
+
+### Products
+- `GET /products?limit=&cursor=&search=&minPrice=&maxPrice` - List with cursor pagination
+- `GET /products/:id` - Product detail
 ## License
+
 MIT

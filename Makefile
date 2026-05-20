@@ -1,15 +1,4 @@
-.PHONY: help up down restart logs migrate seed clean build
-
-help:
-	@echo "Available commands:"
-	@echo "  make up        - Start Docker Compose services"
-	@echo "  make down      - Stop Docker Compose services"
-	@echo "  make restart   - Restart Docker Compose services"
-	@echo "  make logs      - View backend logs"
-	@echo "  make migrate   - Run database migrations"
-	@echo "  make seed      - Seed database with test data"
-	@echo "  make build     - Rebuild Docker images"
-	@echo "  make clean     - Remove containers and volumes"
+.PHONY: up down build rebuild migrate seed logs clean
 
 up:
 	docker-compose up -d
@@ -17,11 +6,13 @@ up:
 down:
 	docker-compose down
 
-restart:
-	docker-compose restart
+build:
+	docker-compose build --no-cache
 
-logs:
-	docker-compose logs -f backend
+rebuild:
+	docker-compose down
+	docker-compose build --no-cache
+	docker-compose up -d
 
 migrate:
 	docker-compose exec -T backend npm run migration:run
@@ -29,8 +20,8 @@ migrate:
 seed:
 	docker-compose exec -T backend npm run seed
 
-build:
-	docker-compose build --no-cache
+logs:
+	docker-compose logs -f
 
 clean:
 	docker-compose down -v

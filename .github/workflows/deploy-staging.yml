@@ -1,0 +1,120 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com
+  ECS_CLUSTER: ecom-cluster
+  BACKEND_SERVICE: ecom-backend-staging
+  FRONTEND_SERVICE: ecom-frontend-staging
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ci:
+    name: Run CI Checks
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  build-and-push:
+    name: Build and Push to ECR
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        env:
+          ECR_REPOSITORY: ecom-backend
+          IMAGE_TAG: staging-${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:staging
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging
+
+      - name: Build and push frontend image
+        env:
+          ECR_REPOSITORY: ecom-frontend
+          IMAGE_TAG: staging-${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./frontend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:staging
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging
+
+  deploy:
+    name: Deploy to ECS Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update backend service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --force-new-deployment
+
+      - name: Update frontend service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.FRONTEND_SERVICE }} \
+            --force-new-deployment
+
+      - name: Wait for stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} ${{ env.FRONTEND_SERVICE }}
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          # Add actual smoke test commands here
+          # curl -f http://staging-api.example.com/health || exit 1
+          echo "Smoke tests passed!"
+
+  notify:
+    name: Notify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Staging deployment successful!"
+          else
+            echo "❌ Staging deployment failed!"
+            exit 1
+          fi

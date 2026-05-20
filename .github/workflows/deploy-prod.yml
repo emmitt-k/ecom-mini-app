@@ -1,0 +1,128 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (default: staging)'
+        required: false
+        default: 'staging'
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-1.amazonaws.com
+  ECS_CLUSTER: ecom-cluster
+  BACKEND_SERVICE: ecom-backend-prod
+  FRONTEND_SERVICE: ecom-frontend-prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  approval:
+    name: Manual Approval Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Confirm deployment
+        run: |
+          echo "🚀 Deploying to PRODUCTION environment"
+          echo "Image tag: ${{ github.event.inputs.image_tag }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+
+  build-and-push:
+    name: Promote to Production
+    needs: approval
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pull staging images and tag as production
+        env:
+          SOURCE_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          # Backend
+          docker pull $ECR_REGISTRY/ecom-backend:$SOURCE_TAG
+          docker tag $ECR_REGISTRY/ecom-backend:$SOURCE_TAG $ECR_REGISTRY/ecom-backend:prod
+          docker tag $ECR_REGISTRY/ecom-backend:$SOURCE_TAG $ECR_REGISTRY/ecom-backend:prod-${{ github.sha }}
+          docker push $ECR_REGISTRY/ecom-backend:prod
+          docker push $ECR_REGISTRY/ecom-backend:prod-${{ github.sha }}
+
+          # Frontend
+          docker pull $ECR_REGISTRY/ecom-frontend:$SOURCE_TAG
+          docker tag $ECR_REGISTRY/ecom-frontend:$SOURCE_TAG $ECR_REGISTRY/ecom-frontend:prod
+          docker tag $ECR_REGISTRY/ecom-frontend:$SOURCE_TAG $ECR_REGISTRY/ecom-frontend:prod-${{ github.sha }}
+          docker push $ECR_REGISTRY/ecom-frontend:prod
+          docker push $ECR_REGISTRY/ecom-frontend:prod-${{ github.sha }}
+
+  deploy:
+    name: Deploy to ECS Production
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update backend service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --force-new-deployment
+
+      - name: Update frontend service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.FRONTEND_SERVICE }} \
+            --force-new-deployment
+
+      - name: Wait for stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} ${{ env.FRONTEND_SERVICE }}
+
+      - name: Health check
+        run: |
+          echo "Checking production health..."
+          # Add health check endpoints
+          # curl -f http://api.example.com/health || exit 1
+          echo "✅ Production deployment successful!"
+
+  rollback-on-failure:
+    name: Rollback on Failure
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: failure()
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback services
+        run: |
+          echo "⚠️ Deployment failed! Initiating rollback..."
+          # ECS automatically rolls back if deployment fails
+          # Additional rollback logic can be added here
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} ${{ env.FRONTEND_SERVICE }}

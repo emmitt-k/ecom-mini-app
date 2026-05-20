@@ -13,7 +13,9 @@ export class ProductsService {
     private productRepository: Repository<Product>,
   ) {}
 
-  async findAll(query: ListProductsQueryDto): Promise<PaginatedProductsResponseDto> {
+  async findAll(
+    query: ListProductsQueryDto,
+  ): Promise<PaginatedProductsResponseDto> {
     const { search, minPrice, maxPrice, limit = 20, cursor } = query;
 
     const queryBuilder = this.productRepository.createQueryBuilder('product');
@@ -63,9 +65,10 @@ export class ProductsService {
     const data = hasMore ? products.slice(0, limit) : products;
 
     // Generate next cursor
-    const nextCursor = hasMore && data.length > 0
-      ? this.encodeCursor(data[data.length - 1])
-      : null;
+    const nextCursor =
+      hasMore && data.length > 0
+        ? this.encodeCursor(data[data.length - 1])
+        : null;
 
     return {
       data: data.map(this.toResponseDto),

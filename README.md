@@ -193,6 +193,48 @@ make build
 
 ---
 
+## CI/CD Pipeline
+
+This project uses **GitHub Actions** for continuous integration and deployment.
+
+### Pipeline Overview
+
+```
+PR to main ────► CI (lint, test, build) ────► Merge ────► Deploy to Staging ────► Manual ────► Deploy to Production
+```
+
+### Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| **CI** | PR to `main`, push to `main` | Lint, unit tests, integration tests, build validation |
+| **Deploy Staging** | Push to `main` | Build & push Docker images to ECR, deploy to ECS staging |
+| **Deploy Production** | Manual trigger | Promote staging images to production, deploy to ECS |
+| **Database Migration** | Manual trigger | Run TypeORM migrations on selected environment |
+
+### Key Features
+
+- **OIDC Authentication**: Secure AWS access without long-lived credentials
+- **Separate Environments**: Staging (auto-deploy) and Production (manual)
+- **Image Promotion**: Production uses the same images tested in staging
+- **Rolling Deployments**: Zero-downtime updates with ECS
+- **Manual Migrations**: Database changes run manually for safety
+
+### Setup
+
+See [docs/CICD_SETUP.md](docs/CICD_SETUP.md) for detailed setup instructions including:
+- AWS resources (ECR, ECS, IAM)
+- GitHub Secrets configuration
+- OIDC provider setup
+- Secrets Manager configuration
+
+### Required GitHub Secrets
+
+```
+AWS_ACCOUNT_ID    # Your AWS account ID
+AWS_ROLE_ARN      # ARN of the IAM role for GitHub Actions
+```
+
 ## Makefile Commands
 
 ```bash

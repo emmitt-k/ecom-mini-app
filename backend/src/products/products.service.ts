@@ -46,7 +46,7 @@ export class ProductsService {
       queryBuilder.andWhere(
         '(product.createdAt < :cursorDate OR (product.createdAt = :cursorDate AND product.id < :cursorId))',
         {
-          cursorDate: decodedCursor.createdAt,
+          cursorDate: new Date(decodedCursor.createdAt),
           cursorId: decodedCursor.id,
         },
       );

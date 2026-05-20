@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, forwardRef } from "react";
+import { useState, forwardRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Lock, Eye, EyeOff } from "lucide-react";
 
@@ -21,17 +21,16 @@ function getPasswordStrength(password: string): number {
 }
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, error, showStrength = true, ...props }, ref) => {
+  ({ className, error, showStrength = true, value: externalValue, onChange, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
-    const [inputValue, setInputValue] = useState("");
+    // Ensure controlled input by using empty string as default
+    const value = (externalValue as string) ?? "";
     
-    // Get value from input ref for strength meter
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInputValue(e.target.value);
-      props.onChange?.(e);
+      onChange?.(e);
     };
     
-    const strength = getPasswordStrength(inputValue);
+    const strength = getPasswordStrength(value);
     const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
     const strengthColors = [
       "",
@@ -55,6 +54,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <input
             ref={ref}
             type={showPassword ? "text" : "password"}
+            value={value}
             className={cn(
               "w-full h-10 pl-11 pr-10 py-2",
               "text-sm text-text-primary placeholder:text-text-tertiary",
@@ -83,7 +83,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
 
-        {showStrength && inputValue && (
+        {showStrength && value && (
           <div className="space-y-1">
             <div className="flex gap-1">
               {[1, 2, 3, 4].map((level) => (
